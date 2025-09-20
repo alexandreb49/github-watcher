@@ -1,6 +1,6 @@
 #!/bin/bash
 
-python -m venv python-env
+python3 -m venv python-env
 
 echo "Initiating the virtual environment"
 
