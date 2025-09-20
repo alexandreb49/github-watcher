@@ -5,10 +5,10 @@ from pydantic import BaseModel
 class Config(BaseModel):
     webhook_port: int = int(os.environ.get('WEBHOOK_PORT', 8080))
     webhook_secret: str = os.environ.get('WEBHOOK_SECRET', '')
-    repo_url: str = os.environ.get('REPO_URL', 'git@github.com:alexandreb49/trading-bot-ubuntu.git')
-    project_dir: str = os.environ.get('PROJECT_DIR', 'trading-bot')
-    home_dir: str = os.path.expanduser('~')
-    ssh_key: str = os.environ.get('SSH_KEY', os.path.expanduser('~/.ssh/id_ed25519'))
+    repo_url: str = os.environ.get('REPO_URL', '')
+    project_dir: str = os.environ.get('PROJECT_DIR', '')
+    home_dir: str = os.environ.get('HOME', '')
+    ssh_key: str =  os.path.expanduser('~/.ssh/id_ed25519')
 
     @property
     def project_path(self):
