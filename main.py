@@ -1,4 +1,10 @@
 from fastapi import FastAPI, Request
+from update_project import pipeline, Config 
+from dotenv import load_dotenv
+
+load_dotenv()
+
+config = Config()
 
 app = FastAPI()
 
@@ -9,10 +15,12 @@ def read_root():
 
 @app.post("/")
 async def receive_github_info(request: Request):
-    payload = await request.json()  # read JSON body
-    print(payload)  # optional, prints to console/logs
-    return {"received": payload}  # returns it back in the response
+    payload = await request.json() 
+    print(payload)  
 
+    pipeline(config)
+
+    return {"success" : True} 
 
 @app.get("/ping")
 def ping():
