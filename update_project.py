@@ -1,7 +1,9 @@
 import subprocess
 import os
 from pydantic import BaseModel
+from dotenv import load_dotenv
 
+load_dotenv()
 
 class Config(BaseModel):
     webhook_port: int = int(os.environ.get('WEBHOOK_PORT', 8080))
