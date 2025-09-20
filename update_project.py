@@ -2,13 +2,14 @@ import subprocess
 import os
 from pydantic import BaseModel
 
+
 class Config(BaseModel):
     webhook_port: int = int(os.environ.get('WEBHOOK_PORT', 8080))
     webhook_secret: str = os.environ.get('WEBHOOK_SECRET', '')
     repo_url: str = os.environ.get('REPO_URL', '')
     project_dir: str = os.environ.get('PROJECT_DIR', '')
     home_dir: str = os.environ.get('HOME', '')
-    ssh_key: str =  os.path.expanduser('~/.ssh/id_ed25519')
+    ssh_key: str = os.path.expanduser('~/.ssh/id_ed25519')
 
     @property
     def project_path(self):
@@ -16,21 +17,36 @@ class Config(BaseModel):
 
 
 def run_command(command, cwd=None, check=True):
+    """Run a shell command and return result (stdout/stderr)."""
     result = subprocess.run(command, shell=True, cwd=cwd, capture_output=True, text=True)
     if check and result.returncode != 0:
         raise RuntimeError(f"Command failed: {command}\nSTDOUT: {result.stdout}\nSTDERR: {result.stderr}")
     return result
 
 
+def start_ssh_agent():
+    """Start ssh-agent and set env vars for current Python process."""
+    result = subprocess.run("ssh-agent -s", shell=True, capture_output=True, text=True, check=True)
+    output = result.stdout
+    for line in output.splitlines():
+        if line.startswith("SSH_AUTH_SOCK"):
+            sock = line.split(";")[0].split("=")[1]
+            os.environ["SSH_AUTH_SOCK"] = sock
+        elif line.startswith("SSH_AGENT_PID"):
+            pid = line.split(";")[0].split("=")[1]
+            os.environ["SSH_AGENT_PID"] = pid
+
+
 def ensure_ssh_key(config: Config):
-    """Check if SSH key is added to agent, if not add it."""
+    """Check if SSH key is loaded, otherwise start agent and add key."""
     try:
         result = subprocess.run(
             f'ssh-add -l | grep "$(ssh-keygen -lf {config.ssh_key} | awk \'{{print $2}}\')"',
             shell=True
         )
         if result.returncode != 0:
-            subprocess.run('eval "$(ssh-agent -s)"', shell=True, check=True)
+            if "SSH_AUTH_SOCK" not in os.environ:
+                start_ssh_agent()
             run_command(f'ssh-add "{config.ssh_key}"')
     except Exception as e:
         print(f"Failed to load SSH key: {e}")
@@ -45,12 +61,11 @@ def clone_or_update_repo(repo_url, project_path):
         run_command(f"git clone {repo_url} {project_path}")
     else:
         print("Repository exists. Updating...")
-        os.chdir(project_path)
-        run_command("git switch main", check=False)
-        run_command("git switch master", check=False)
-        run_command("git fetch origin")
-        run_command("git reset --hard origin/main", check=False)
-        run_command("git reset --hard origin/master", check=False)
+        run_command("git switch main", cwd=project_path, check=False)
+        run_command("git switch master", cwd=project_path, check=False)
+        run_command("git fetch origin", cwd=project_path)
+        run_command("git reset --hard origin/main", cwd=project_path, check=False)
+        run_command("git reset --hard origin/master", cwd=project_path, check=False)
         print("Repository updated.")
 
 
