@@ -149,30 +149,8 @@ def clone_or_update_repo(repo_url, project_path):
             print("Repository cloned successfully")
         else:
             print("Repository exists. Updating...")
-            
-            # Determine the default branch
-            try:
-                result = run_command("git symbolic-ref refs/remotes/origin/HEAD", cwd=project_path, check=False)
-                if result.returncode == 0:
-                    default_branch = result.stdout.strip().split('/')[-1]
-                else:
-                    # Fallback: check what branches exist
-                    result = run_command("git branch -r", cwd=project_path)
-                    if "origin/main" in result.stdout:
-                        default_branch = "main"
-                    elif "origin/master" in result.stdout:
-                        default_branch = "master"
-                    else:
-                        default_branch = "main"  # Default assumption
-            except:
-                default_branch = "main"
-            
-            print(f"Using branch: {default_branch}")
-            
             # Update repository
-            run_command("git fetch origin", cwd=project_path)
-            run_command(f"git checkout {default_branch}", cwd=project_path, check=False)
-            run_command(f"git reset --hard origin/{default_branch}", cwd=project_path)
+            run_command("git pull origin main", cwd=project_path)
             print("Repository updated successfully")
             
     except Exception as e:
