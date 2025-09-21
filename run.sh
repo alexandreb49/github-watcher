@@ -8,6 +8,7 @@ source python-env/bin/activate
 
 pip install -r requirements.txt
 
+ngrok config add-authtoken $NGROK_AUTHTOKEN
 
 ngrok http 8080 --region=eu --hostname=$NGROK_DOMAIN &
 

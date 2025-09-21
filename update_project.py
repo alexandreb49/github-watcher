@@ -202,6 +202,14 @@ def run_project(project_path):
 def pipeline(config: Config):
     """Full deployment pipeline."""
     print("Starting deployment pipeline...")
+
+    if os.getuid() == 0:  # Running as root
+        try:
+            run_command(f"git config --global --add safe.directory {config.project_path}", check=False)
+            print(f"Added {config.project_path} as safe directory for git")
+        except Exception as e:
+            print(f"Warning: Could not add safe directory: {e}")
+    
     
     # Validate configuration
     if not config.repo_url:
