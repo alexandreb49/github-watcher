@@ -45,6 +45,11 @@ def start_ssh_agent():
         return False
 
 
+def fix_git_permissions(project_path):
+    run_command(f"chown -R {os.getlogin()}:{os.getlogin()} {project_path}", check=False)
+    run_command(f"chmod -R u+rwX {project_path}", check=False)
+    print("✅ Fixed Git permissions")
+
 def generate_ssh_key(ssh_key_path):
     """Generate a new SSH key if it doesn't exist."""
     try:
@@ -61,16 +66,7 @@ def generate_ssh_key(ssh_key_path):
         if os.path.exists(pub_key_path):
             with open(pub_key_path, 'r') as f:
                 pub_key = f.read().strip()
-            print("\n" + "="*60)
-            print("🔑 ADD THIS PUBLIC KEY TO YOUR GITHUB ACCOUNT:")
-            print("="*60)
-            print(pub_key)
-            print("="*60)
-            print("1. Go to GitHub Settings > SSH and GPG keys")
-            print("2. Click 'New SSH key'")
-            print("3. Paste the key above")
-            print("4. Save the key")
-            print("="*60 + "\n")
+
         
         return True
     except Exception as e:
@@ -187,7 +183,8 @@ def pipeline(config: Config):
     except Exception as e:
             print(f"Warning: Could not add safe directory: {e}")
     
-    
+    fix_git_permissions(config.project_path)
+
     # Validate configuration
     if not config.repo_url:
         print("❌ REPO_URL environment variable is not set")
